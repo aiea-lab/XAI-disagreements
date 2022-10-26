@@ -52,6 +52,7 @@ def f(X):
 
 lime_explainer = lime.lime_tabular.LimeTabularExplainer(X_train.values, feature_names=list(X_display.columns), class_names=['under 50k', 'over 50k'], mode='regression')
 csv_results = {}
+compiled_results = []
 csv_results['model'] = 'lime'
 field_names = ['model', 'index', 'Age', 'Workclass', 'Education-Num', 'Marital Status', 'Occupation', 'Relationship', 'Race', 'Sex', 'Capital Gain', 'Capital Loss', 'Hours per week', 'Country']
 for i in range(len(X_valid.values)):
@@ -60,10 +61,7 @@ for i in range(len(X_valid.values)):
     lime_exp = lime_explainer.explain_instance(X_valid.values[i,:], f, num_features=12)
     for count, j in enumerate(lime_exp.as_list()):
         csv_results[field_names[count+2]] = j[1]
-    with open('explanation_results.csv', 'a', newline='') as csv_file:
-        dict_obj = csv.DictWriter(csv_file, fieldnames=field_names)
-        dict_obj.writerow(csv_results)
-        csv_file.close()
+    compiled_results.append(csv_results)
 
 explainer = shap.KernelExplainer(f, X_train.values)
 csv_results['model'] = 'shap'
@@ -72,7 +70,10 @@ for i, shap_result in enumerate(shap_exp):
     csv_results['index'] = i
     for count, j in enumerate(shap_result):
         csv_results[field_names[count+2]] = j
-    with open('explanation_results.csv', 'a', newline='') as csv_file:
-        dict_obj = csv.DictWriter(csv_file, fieldnames=field_names)
-        dict_obj.writerow(csv_results)
-        csv_file.close()
+    compiled_results.append(csv_results)
+
+with open('explanation_results.csv', 'a', newline='') as csv_file:
+    dict_obj = csv.DictWriter(csv_file, fieldnames=field_names)
+    for csv_row in csv_results:
+        dict_obj.writerow(csv_row)
+    csv_file.close()
