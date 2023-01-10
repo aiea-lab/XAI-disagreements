@@ -58,22 +58,16 @@ field_names = ['model', 'index', 'Age', 'Workclass', 'Education-Num', 'Marital S
 for i in range(len(X_valid.values)):
     
     csv_results['index'] = i
+    if i%(len(X_valid.values)//100) == 0:
+        print(csv_results['model'], csv_results['index'])
     lime_exp = lime_explainer.explain_instance(X_valid.values[i,:], f, num_features=12)
     for count, j in enumerate(lime_exp.as_list()):
         csv_results[field_names[count+2]] = j[1]
-    compiled_results.append(csv_results)
+    compiled_results.append(csv_results.copy())
 
-explainer = shap.KernelExplainer(f, X_train.values)
-csv_results['model'] = 'shap'
-shap_exp = explainer.shap_values(X_valid.values, nsamples=500)
-for i, shap_result in enumerate(shap_exp):
-    csv_results['index'] = i
-    for count, j in enumerate(shap_result):
-        csv_results[field_names[count+2]] = j
-    compiled_results.append(csv_results)
-
-with open('explanation_results.csv', 'a', newline='') as csv_file:
+with open('explanation_results.csv', 'w', newline='') as csv_file:
     dict_obj = csv.DictWriter(csv_file, fieldnames=field_names)
-    for csv_row in csv_results:
+    dict_obj.writeheader
+    for csv_row in compiled_results:
         dict_obj.writerow(csv_row)
     csv_file.close()

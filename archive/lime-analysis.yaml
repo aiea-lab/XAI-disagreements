@@ -1,0 +1,43 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: lime-shap-analysis
+spec:
+  template:
+    spec:
+      containers:
+      - name: demo
+        image: prp/jupyter-stack/prp:latest
+        command:
+        - sh
+        - -c
+        - "cd /persistentvol/ && ls && ./setup-run-lime.sh"
+        volumeMounts:
+        - name: persistentvol
+          mountPath: /persistentvol
+        resources:
+          limits:
+            memory: 64Gi
+            cpu: "8"
+            nvidia.com/gpu: "1"
+          requests:
+            memory: 32Gi
+            cpu: "4"
+            nvidia.com/gpu: "1"
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: nvidia.com/gpu.product
+                operator: In
+                values:
+                - NVIDIA-RTX-A6000
+                - NVIDIA-A100-SXM4-80GB
+                - NVIDIA-GeForce-RTX-2080-Ti
+      volumes:
+      - name: persistentvol
+        persistentVolumeClaim:
+          claimName: large-vol
+      restartPolicy: Never
+  backoffLimit: 5
